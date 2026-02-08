@@ -1,4 +1,6 @@
 #include <raylib.h>
+#include <stdlib.h>
+#include <time.h>
 
 // Important Defines
 #define BOARD_WIDTH 10
@@ -20,9 +22,12 @@ static void UpdateDrawFrame(void);
 // -----
 typedef struct Tetromino
 {
-    Vector4 upperBlocks;
-    Vector4 lowerBlocks;
+    int grid[4][4];
     Color color;
+    int position_x;
+    int position_y;
+    int edge_l;
+    int edge_r;
 } Tetromino;
 
 
@@ -32,18 +37,34 @@ typedef struct Tetromino
 // -----
 const int screenWidth = 1200;
 const int screenHeight = 900;
+Tetromino currentPiece;
 
 void InitGame(void)
 {
     ClearBackground(WHITE);
-    DrawText("Fun colors and shapes, the video game", 100, 100, 20, BLACK);
+    DrawText("Softris", 500, 100, 20, BLACK);
     DrawRectangle(0, 0, (GRID_CUBE_SIZE*BOARD_WIDTH), (GRID_CUBE_SIZE*BOARD_HEIGHT), LIGHTGRAY); // The tetris board
     for (int i = 1; (i < (BOARD_WIDTH+1)); i++)
     {
         for (int j = 1; (j < (BOARD_HEIGHT+1)); j++)
         {
-            DrawLineV((Vector2){(GRID_CUBE_SIZE*i), 0},(Vector2){(GRID_CUBE_SIZE*i), 900}, BLACK); // Vertical Line
-            DrawLineV((Vector2){0, (GRID_CUBE_SIZE*j)},(Vector2){450, (GRID_CUBE_SIZE*j)}, BLACK); // Vertical Line
+            DrawLineV((Vector2){(GRID_CUBE_SIZE*i), 0},(Vector2){(GRID_CUBE_SIZE*i), 900}, BLACK); // Vertical Lines
+            DrawLineV((Vector2){0, (GRID_CUBE_SIZE*j)},(Vector2){450, (GRID_CUBE_SIZE*j)}, BLACK); // Horizontal Lines
+        }
+    }
+}
+
+
+void DrawPiece(Tetromino current_piece)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (current_piece.grid[j][i])
+            {
+                DrawRectangle(((current_piece.position_x+i)*GRID_CUBE_SIZE), ((current_piece.position_y+j)*GRID_CUBE_SIZE), GRID_CUBE_SIZE, GRID_CUBE_SIZE, current_piece.color);
+            }
         }
     }
 }
@@ -56,54 +77,145 @@ int main(void)
 
     SetTargetFPS(FPS);
 
-    //Defining the tetrominos and their values
-    Tetromino i_tetromino; // I-tetromino
-    i_tetromino.upperBlocks = (Vector4){0,0,0,0};
-    i_tetromino.lowerBlocks = (Vector4){1,1,1,1};
-    i_tetromino.color = BLUE;
+    //Defining the standard tetrominos and their values
+    Tetromino i_tetromino =
+    {
+        .grid =
+        {
+            {0,0,0,0},
+            {0,0,0,0},
+            {0,0,0,0},
+            {1,1,1,1}
+        },
+        .color = BLUE,
+        .position_x = 0,
+        .position_y = 0,
+        .edge_l = 0,
+        .edge_r = 4
+    };
 
-    Tetromino j_tetromino; // J-tetromino
-    j_tetromino.upperBlocks = (Vector4){1,0,0,0};
-    j_tetromino.lowerBlocks = (Vector4){1,1,1,0};
-    j_tetromino.color = DARKBLUE;
+    Tetromino j_tetromino =
+    {
+        .grid =
+        {
+            {0,0,0,0},
+            {0,0,0,0},
+            {1,0,0,0},
+            {1,1,1,0}
+        },
+        .color = DARKBLUE,
+        .position_x = 0,
+        .position_y = 0,
+        .edge_l = 0,
+        .edge_r = 3
+    };
 
-    Tetromino l_tetromino; // L-tetromino
-    l_tetromino.upperBlocks = (Vector4){0,0,1,0};
-    l_tetromino.lowerBlocks = (Vector4){1,1,1,0};
-    l_tetromino.color = ORANGE;
+    Tetromino l_tetromino =
+    {
+        .grid =
+        {
+            {0,0,0,0},
+            {0,0,0,0},
+            {0,0,1,0},
+            {1,1,1,0}
+        },
+        .color = ORANGE,
+        .position_x = 0,
+        .position_y = 0,
+        .edge_l = 0,
+        .edge_r = 3
+    };
 
-    Tetromino o_tetromino; // O-tetromino
-    o_tetromino.upperBlocks = (Vector4){0,1,1,0};
-    o_tetromino.lowerBlocks = (Vector4){0,1,1,0};
-    o_tetromino.color = YELLOW;
+    Tetromino o_tetromino =
+    {
+        .grid =
+        {
+            {0,0,0,0},
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,1,1,0}
+        },
+        .color = PINK,
+        .position_x = 0,
+        .position_y = 0,
+        .edge_l = 1,
+        .edge_r = 3
+    };
 
-    Tetromino s_tetromino; // S-tetromino
-    s_tetromino.upperBlocks = (Vector4){0,1,1,0};
-    s_tetromino.lowerBlocks = (Vector4){1,1,0,0};
-    s_tetromino.color = DARKGREEN;
+    Tetromino s_tetromino =
+    {
+        .grid =
+        {
+            {0,0,0,0},
+            {0,0,0,0},
+            {0,1,1,0},
+            {1,1,0,0}
+        },
+        .color = GREEN,
+        .position_x = 0,
+        .position_y = 0,
+        .edge_l = 0,
+        .edge_r = 3
+    };
 
-    Tetromino z_tetromino; // Z-Tetromino
-    z_tetromino.upperBlocks = (Vector4){1,1,0,0};
-    z_tetromino.lowerBlocks = (Vector4){0,1,1,0};
-    z_tetromino.color = RED;
+    Tetromino z_tetromino =
+    {
+        .grid =
+        {
+            {0,0,0,0},
+            {0,0,0,0},
+            {0,1,1,0},
+            {0,0,1,1}
+        },
+        .color = RED,
+        .position_x = 0,
+        .position_y = 0,
+        .edge_l = 1,
+        .edge_r = 4
+    };
 
-    Tetromino t_tetromino; // T-tetromino
-    t_tetromino.upperBlocks = (Vector4){0,1,0,0};
-    t_tetromino.lowerBlocks = (Vector4){1,1,1,0};
-    t_tetromino.color = PURPLE;
+    Tetromino t_tetromino =
+    {
+        .grid =
+        {
+            {0,0,0,0},
+            {0,0,0,0},
+            {0,1,0,0},
+            {1,1,1,0}
+        },
+        .color = PURPLE,
+        .position_x = 0,
+        .position_y = 0,
+        .edge_l = 0,
+        .edge_r = 3
+    };
 
     // Making an array of all the pieces for easy access
     Tetromino pieces[] = {i_tetromino, j_tetromino, l_tetromino, o_tetromino, s_tetromino, z_tetromino, t_tetromino};
 
-
+    srand(time(NULL));
+    Tetromino current_piece = pieces[rand()%7];
 
     // Main Game Loop
     while (!WindowShouldClose())
     {
-        // Variable updating here
+        // Controls
+        if (IsKeyPressed(KEY_RIGHT)) current_piece.position_x++;
+        if (IsKeyPressed(KEY_LEFT)) current_piece.position_x--;
+        if (IsKeyPressed(KEY_DOWN)) current_piece.position_y++;
+        if (IsKeyPressed(KEY_UP)) current_piece.position_y = BOARD_HEIGHT-4;
+
+        // Checking the pieces dont go OOB
+        if ((current_piece.position_x-current_piece.edge_l) < 0)
+        {
+            current_piece.position_x = 0;
+        } else if (current_piece.position_x + current_piece.edge_r >= BOARD_WIDTH) {
+            current_piece.position_x = BOARD_WIDTH - current_piece.edge_r;
+        }
 
         BeginDrawing();
             InitGame();
+            DrawPiece(current_piece);
         EndDrawing();
     }
 
