@@ -57,6 +57,8 @@ void InitGame(void)
 
 void DrawPiece(Tetromino current_piece)
 {
+    int new_positions[2] = {0,0};
+
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
@@ -65,6 +67,48 @@ void DrawPiece(Tetromino current_piece)
             {
                 DrawRectangle(((current_piece.position_x+i)*GRID_CUBE_SIZE), ((current_piece.position_y+j)*GRID_CUBE_SIZE), GRID_CUBE_SIZE, GRID_CUBE_SIZE, current_piece.color);
             }
+        }
+    }
+}
+
+void rotatePiece_ccw(Tetromino *current_piece)
+{
+    int temp_matrix[4][4];
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            temp_matrix[4-j-1][i] = current_piece->grid[i][j];
+        }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            current_piece->grid[i][j] = temp_matrix[i][j];
+        }
+    }
+}
+
+void rotatePiece_cw(Tetromino *current_piece)
+{
+    int temp_matrix[4][4];
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            temp_matrix[j][4-i-1] = current_piece->grid[i][j];
+        }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            current_piece->grid[i][j] = temp_matrix[i][j];
         }
     }
 }
@@ -91,7 +135,7 @@ int main(void)
         .position_x = 0,
         .position_y = 0,
         .edge_l = 0,
-        .edge_r = 4
+        .edge_r = 0
     };
 
     Tetromino j_tetromino =
@@ -107,7 +151,7 @@ int main(void)
         .position_x = 0,
         .position_y = 0,
         .edge_l = 0,
-        .edge_r = 3
+        .edge_r = 1
     };
 
     Tetromino l_tetromino =
@@ -123,7 +167,7 @@ int main(void)
         .position_x = 0,
         .position_y = 0,
         .edge_l = 0,
-        .edge_r = 3
+        .edge_r = 1
     };
 
     Tetromino o_tetromino =
@@ -139,7 +183,7 @@ int main(void)
         .position_x = 0,
         .position_y = 0,
         .edge_l = 1,
-        .edge_r = 3
+        .edge_r = 1
     };
 
     Tetromino s_tetromino =
@@ -155,7 +199,7 @@ int main(void)
         .position_x = 0,
         .position_y = 0,
         .edge_l = 0,
-        .edge_r = 3
+        .edge_r = 1
     };
 
     Tetromino z_tetromino =
@@ -171,7 +215,7 @@ int main(void)
         .position_x = 0,
         .position_y = 0,
         .edge_l = 1,
-        .edge_r = 4
+        .edge_r = 0
     };
 
     Tetromino t_tetromino =
@@ -187,14 +231,15 @@ int main(void)
         .position_x = 0,
         .position_y = 0,
         .edge_l = 0,
-        .edge_r = 3
+        .edge_r = 1
     };
 
     // Making an array of all the pieces for easy access
     Tetromino pieces[] = {i_tetromino, j_tetromino, l_tetromino, o_tetromino, s_tetromino, z_tetromino, t_tetromino};
 
     srand(time(NULL));
-    Tetromino current_piece = pieces[rand()%7];
+    //Tetromino current_piece = pieces[rand()%7];
+    Tetromino current_piece = pieces[0];
 
     // Main Game Loop
     while (!WindowShouldClose())
@@ -204,13 +249,17 @@ int main(void)
         if (IsKeyPressed(KEY_LEFT)) current_piece.position_x--;
         if (IsKeyPressed(KEY_DOWN)) current_piece.position_y++;
         if (IsKeyPressed(KEY_UP)) current_piece.position_y = BOARD_HEIGHT-4;
+        if (IsKeyPressed(KEY_X)) rotatePiece_ccw(&current_piece);
+        if (IsKeyPressed(KEY_C)) rotatePiece_cw(&current_piece);
+
+        //Piece Rotation
 
         // Checking the pieces dont go OOB
-        if ((current_piece.position_x-current_piece.edge_l) < 0)
+        if ((current_piece.position_x+current_piece.edge_l) < 0)
         {
-            current_piece.position_x = 0;
-        } else if (current_piece.position_x + current_piece.edge_r >= BOARD_WIDTH) {
-            current_piece.position_x = BOARD_WIDTH - current_piece.edge_r;
+            current_piece.position_x = 0 - current_piece.edge_l;
+        } else if (current_piece.position_x + 3 - current_piece.edge_r >= (BOARD_WIDTH)) {
+            current_piece.position_x = (BOARD_WIDTH-3)+current_piece.edge_r-1;
         }
 
         BeginDrawing();
