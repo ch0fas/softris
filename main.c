@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -88,6 +89,36 @@ void rotatePiece_ccw(Tetromino *current_piece)
         for (int j = 0; j < 4; j++)
         {
             current_piece->grid[i][j] = temp_matrix[i][j];
+        }
+    }
+
+    current_piece->edge_l = -1;
+    current_piece->edge_r = -1;
+    bool found_edge_l = false;
+    bool found_edge_r = false;
+    for (int i = 0; i < 4 && !found_edge_l; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (current_piece->grid[j][i] == 1)
+            {
+                current_piece->edge_l = i;
+                found_edge_l = true;
+                break;
+            }
+        }
+    }
+
+    for (unsigned i = 4; i -- > 0 && !found_edge_r;)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (current_piece->grid[j][i] == 1)
+            {
+                current_piece->edge_r = i;
+                found_edge_r = true;
+                break;
+            }
         }
     }
 }
@@ -258,7 +289,8 @@ int main(void)
         if ((current_piece.position_x+current_piece.edge_l) < 0)
         {
             current_piece.position_x = 0 - current_piece.edge_l;
-        } else if (current_piece.position_x + 3 - current_piece.edge_r >= (BOARD_WIDTH)) {
+        } else if (current_piece.position_x + 3 - current_piece.edge_r >= (BOARD_WIDTH))
+        {
             current_piece.position_x = (BOARD_WIDTH-3)+current_piece.edge_r-1;
         }
 
